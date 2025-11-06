@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Travel Price Finder (MVP)</title>
+    <style>
+      body { font-family: Arial, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+      label { display:block; margin-top: 0.75rem }
+      input, textarea { width:100%; padding: 0.5rem; }
+      button { margin-top: 1rem; padding: 0.6rem 1rem }
+      .result { border:1px solid #ddd; padding: 0.6rem; margin-top: 0.5rem }
+    </style>
+  </head>
+  <body>
+    <h1>Travel Price Finder (MVP)</h1>
+    <p>Enter the date range you can travel and a comma-separated list of destinations. This demo uses a mock price provider.</p>
+
+    <label>Availability start
+      <input id="start" type="date" />
+    </label>
+
+    <label>Availability end
+      <input id="end" type="date" />
+    </label>
+
+    <label>Destinations (comma-separated, e.g. Paris, Tokyo, NYC)
+      <input id="destinations" type="text" placeholder="Paris, Tokyo" />
+    </label>
+
+    <label>Min nights
+      <input id="minNights" type="number" value="2" min="1" />
+    </label>
+
+    <label>Max nights
+      <input id="maxNights" type="number" value="7" min="1" />
+    </label>
+
+    <button id="search">Find best prices</button>
+
+    <div id="output"></div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

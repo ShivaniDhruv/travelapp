@@ -1,0 +1,16 @@
+{
+  "name": "travelapp",
+  "version": "0.1.0",
+  "description": "Minimal travel search MVP (mock provider). Replace mock with a real flights API or scraper.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/testProvider.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
+  }
+}
