@@ -3,44 +3,194 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Travel Price Finder (MVP)</title>
+    <title>Travel Price Finder</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css">
     <style>
-      body { font-family: Arial, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
-      label { display:block; margin-top: 0.75rem }
-      input, textarea { width:100%; padding: 0.5rem; }
-      button { margin-top: 1rem; padding: 0.6rem 1rem }
-      .result { border:1px solid #ddd; padding: 0.6rem; margin-top: 0.5rem }
+      :root {
+        --primary: #ff7e5f;
+        --primary-light: #feb47b;
+        --accent: #6dd5ed;
+        --accent-dark: #2193b0;
+        --gray-100: #f3f4f6;
+        --gray-200: #e5e7eb;
+        --gray-700: #374151;
+        --gray-800: #1f2937;
+      }
+      body { 
+        font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        line-height: 1.5;
+        color: var(--gray-800);
+        background: linear-gradient(135deg, var(--primary-light) 0%, var(--accent) 100%);
+      }
+      .container {
+        background: white;
+        padding: 2rem;
+        border-radius: 1.5rem;
+        box-shadow: 0 8px 24px 0 rgb(0 0 0 / 0.08);
+        border: 2px solid var(--accent-dark);
+      }
+      h1 {
+        font-size: 2.2rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+      }
+      label {
+        display: block;
+        margin-top: 1.5rem;
+        font-weight: 500;
+        color: var(--gray-700);
+      }
+      input, textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--gray-200);
+        border-radius: 0.5rem;
+        margin-top: 0.5rem;
+        font-size: 1rem;
+      }
+      input:focus {
+        outline: 2px solid var(--primary-light);
+        outline-offset: 2px;
+      }
+      button {
+        background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.5rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 2px 8px 0 rgb(255 126 95 / 0.10);
+      }
+      button:hover {
+        background: linear-gradient(90deg, var(--accent) 0%, var(--primary) 100%);
+        color: #fff;
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 4px 16px 0 rgb(33 147 176 / 0.13);
+      }
+      .date-picker-section {
+        margin: 1.5rem 0;
+      }
+      .date-picker-label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+      }
+      .date-range {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        margin-bottom: 1rem;
+      }
+      .date-range input {
+        flex: 1;
+      }
+      .selected-dates {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        min-height: 2rem;
+      }
+      .date-tag {
+        background: var(--accent);
+        color: var(--gray-800);
+        padding: 0.5rem 1.1rem;
+        border-radius: 1.2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        font-size: 1.05rem;
+        box-shadow: 0 2px 8px 0 rgb(109 213 237 / 0.10);
+        border: 1.5px solid var(--primary-light);
+      }
+      .date-tag button {
+        padding: 0.25rem 0.5rem;
+        background: none;
+        border: none;
+        color: var(--primary);
+        font-size: 1.1rem;
+        font-weight: 700;
+      }
+      .date-tag button:hover {
+        color: var(--accent-dark);
+        background: none;
+      }
+      .result {
+        background: linear-gradient(90deg, var(--primary-light) 0%, var(--accent) 100%);
+        padding: 1.2rem 1rem 1.2rem 1.5rem;
+        border-radius: 1rem;
+        margin-top: 1rem;
+        border: 2px solid var(--primary);
+        box-shadow: 0 2px 8px 0 rgb(255 126 95 / 0.10);
+        color: var(--gray-800);
+        display: flex;
+        align-items: center;
+        gap: 1.2rem;
+      }
+      .result strong {
+        color: var(--primary);
+        font-size: 1.2rem;
+        margin-right: 0.5rem;
+      }
+      .result .plane {
+        font-size: 2rem;
+        color: var(--accent-dark);
+        margin-right: 0.7rem;
+        filter: drop-shadow(0 2px 4px #2193b033);
+      }
+      #output {
+        margin-top: 2rem;
+      }
+      .help-text {
+        color: var(--gray-700);
+        font-size: 0.9rem;
+        margin: 0.5rem 0;
+      }
     </style>
   </head>
   <body>
-    <h1>Travel Price Finder (MVP)</h1>
-    <p>Enter the date range you can travel and a comma-separated list of destinations. This demo uses a mock price provider.</p>
+    <div class="container">
+  <h1><i class="fas fa-plane-departure" style="color:var(--primary);"></i> Travel Price Finder</h1>
+      <p>Select your available dates and destinations to find the best travel prices.</p>
 
-    <p>Select the specific days you have available (you can add multiple non-contiguous days). The app will compute the longest consecutive block from these dates and use that as the maximum trip length.</p>
-
-    <label>Add an available date
-      <div style="display:flex; gap:0.5rem">
-        <input id="dateInput" type="date" />
-        <button id="addDate" type="button">Add date</button>
+      <div class="date-picker-section">
+        <div class="date-picker-label">Add available dates</div>
+        <p class="help-text">Pick single dates or drag to select a range</p>
+        <div class="date-range">
+          <input id="dateInput" type="text" placeholder="Select dates..." />
+        </div>
       </div>
-    </label>
 
-    <label>Selected available dates
-      <div id="selectedDates" style="min-height:2rem; padding:0.25rem; border:1px dashed #ccc;"></div>
-    </label>
+      <label>Your selected dates
+        <div id="selectedDates" class="selected-dates"></div>
+      </label>
 
-    <label>Destinations (comma-separated, e.g. Paris, Tokyo, NYC)
-      <input id="destinations" type="text" placeholder="Paris, Tokyo" />
-    </label>
+      <label>Where do you want to go?
+        <input id="destinations" type="text" placeholder="e.g., Paris, Tokyo, NYC" />
+        <div class="help-text">Enter cities separated by commas</div>
+      </label>
 
-    <label>Min nights
-      <input id="minNights" type="number" value="2" min="1" />
-    </label>
+      <label>Minimum nights per trip
+        <input id="minNights" type="number" value="2" min="1" />
+        <div class="help-text">Shortest trip duration you'd consider</div>
+      </label>
 
-    <button id="search">Find best prices</button>
+      <button id="search">Find best prices</button>
 
-    <div id="output"></div>
+      <div id="output"></div>
+    </div>
 
-    <script src="app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="app.js"></script>
   </body>
 </html>

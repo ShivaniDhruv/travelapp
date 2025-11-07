@@ -1,54 +1,115 @@
 console.log('app.js loaded');
 
 let selectedDates = [];
+let flatpickrInstance = null;
+
+// Format a date as YYYY-MM-DD
+function formatDate(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+// Parse a date range and add all dates in between
+function addDateRange(start, end) {
+  const dates = [];
+  const current = new Date(start);
+  const endDate = new Date(end);
+  
+  while (current <= endDate) {
+    dates.push(formatDate(current));
+    current.setDate(current.getDate() + 1);
+  }
+  
+  // Add all dates that aren't already selected
+  for (const d of dates) {
+    if (!selectedDates.includes(d)) {
+      selectedDates.push(d);
+    }
+  }
+  
+  // Sort all dates
+  selectedDates.sort();
+  renderSelectedDates();
+}
 
 function renderSelectedDates() {
   const container = document.getElementById('selectedDates');
   if (!container) return;
   container.innerHTML = '';
+  
   if (selectedDates.length === 0) {
-    container.textContent = 'No dates selected';
+    container.innerHTML = '<div class="help-text">No dates selected yet</div>';
     return;
   }
-  const ul = document.createElement('div');
-  ul.style.display = 'flex';
-  ul.style.flexWrap = 'wrap';
-  ul.style.gap = '0.5rem';
-  for (const d of selectedDates) {
+  
+  // Group consecutive dates into ranges for cleaner display
+  const ranges = [];
+  let currentRange = [selectedDates[0]];
+  
+  function dayAfter(a, b) {
+    const da = new Date(a);
+    const db = new Date(b);
+    const diff = (db - da) / (1000 * 60 * 60 * 24);
+    return diff === 1;
+  }
+  
+  for (let i = 1; i < selectedDates.length; i++) {
+    if (dayAfter(selectedDates[i-1], selectedDates[i])) {
+      currentRange.push(selectedDates[i]);
+    } else {
+      ranges.push(currentRange);
+      currentRange = [selectedDates[i]];
+    }
+  }
+  ranges.push(currentRange);
+  
+  // Create tags for each range
+  for (const range of ranges) {
     const el = document.createElement('div');
-    el.style.border = '1px solid #ddd';
-    el.style.padding = '0.25rem 0.5rem';
-    el.style.borderRadius = '4px';
-    el.textContent = d + ' ';
-    const rm = document.createElement('button');
-    rm.textContent = 'x';
-    rm.style.marginLeft = '0.5rem';
-    rm.addEventListener('click', () => { removeSelectedDate(d); });
-    el.appendChild(rm);
-    ul.appendChild(el);
+    el.className = 'date-tag';
+    
+    const dates = range.length === 1 
+      ? range[0]
+      : `${range[0]} → ${range[range.length-1]}`;
+      
+    el.innerHTML = `
+      <span>${dates}</span>
+      <button type="button" title="Remove these dates">×</button>
+    `;
+    
+    // Remove either single date or range when clicking X
+    el.querySelector('button').addEventListener('click', () => {
+      selectedDates = selectedDates.filter(d => !range.includes(d));
+      renderSelectedDates();
+      
+      // Clear the date picker selection
+      if (flatpickrInstance) {
+        flatpickrInstance.clear();
+      }
+    });
+    
+    container.appendChild(el);
   }
-  container.appendChild(ul);
-}
-
-function addSelectedDate(dateStr) {
-  if (!dateStr) return;
-  if (!selectedDates.includes(dateStr)) {
-    selectedDates.push(dateStr);
-    // keep sorted
-    selectedDates.sort();
-  }
-  renderSelectedDates();
-}
-
-function removeSelectedDate(dateStr) {
-  selectedDates = selectedDates.filter(d => d !== dateStr);
-  renderSelectedDates();
 }
 
 async function doSearch() {
-  const dests = document.getElementById('destinations').value.split(',').map(s => s.trim()).filter(Boolean);
+  const dests = document.getElementById('destinations').value
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+    
   const minNights = parseInt(document.getElementById('minNights').value || '1', 10);
   const output = document.getElementById('output');
+  
+  if (!dests.length) {
+    output.innerHTML = '<div class="help-text">Please enter at least one destination</div>';
+    return;
+  }
+  
+  if (!selectedDates.length) {
+    output.innerHTML = '<div class="help-text">Please select some available dates first</div>';
+    return;
+  }
+  
   output.innerHTML = '<p>Searching…</p>';
 
   try {
@@ -76,24 +137,73 @@ async function doSearch() {
 function renderResults(results) {
   const output = document.getElementById('output');
   if (!results || results.length === 0) {
-    output.innerHTML = '<p>No results</p>';
+    output.innerHTML = '<p>No results found</p>';
     return;
   }
   output.innerHTML = '';
   for (const r of results) {
     const div = document.createElement('div');
     div.className = 'result';
+    const planeIcon = '<span class="plane"><i class="fas fa-plane-departure"></i></span>';
     if (!r.best) {
-      div.innerHTML = `<strong>${r.destination}</strong><div>No candidate trips in the given window.</div>`;
+      div.innerHTML = `
+        ${planeIcon}
+        <strong>${r.destination}</strong>
+        <div>No suitable trips found in your selected dates.</div>
+      `;
     } else {
-      div.innerHTML = `<strong>${r.destination}</strong>
+      div.innerHTML = `
+        ${planeIcon}
+        <strong>${r.destination}</strong>
         <div>Depart: ${r.best.depart}</div>
         <div>Return: ${r.best.return}</div>
-        <div>Estimated price: $${r.best.price}</div>`;
+        <div>Estimated price: $${r.best.price}</div>
+      `;
     }
     output.appendChild(div);
   }
 }
+
+// Initialize Flatpickr calendar and wire up event handlers
+document.addEventListener('DOMContentLoaded', () => {
+  // Initialize date picker
+  flatpickrInstance = flatpickr("#dateInput", {
+    mode: "range",
+    dateFormat: "Y-m-d",
+    minDate: "today",
+    showMonths: 2,
+    animate: true,
+    position: "below",
+    static: true,
+    onOpen: function(selectedDates, dateStr, instance) {
+      // Try to keep calendar in viewport
+      setTimeout(() => {
+        const cal = instance.calendarContainer;
+        if (cal) {
+          cal.style.left = '0';
+          cal.style.right = 'auto';
+          cal.style.maxWidth = '100vw';
+          cal.style.zIndex = 1000;
+        }
+      }, 10);
+    },
+    onClose: function(dates) {
+      if (dates.length === 2) {
+        addDateRange(dates[0], dates[1]);
+        this.clear(); // Clear for next selection
+      }
+    }
+  });
+  
+  // Wire search button
+  const btn = document.getElementById('search');
+  if (btn) {
+    btn.addEventListener('click', doSearch);
+  }
+  
+  // Initial render
+  renderSelectedDates();
+});
 
 document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('search');
