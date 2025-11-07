@@ -16,12 +16,17 @@
     <h1>Travel Price Finder (MVP)</h1>
     <p>Enter the date range you can travel and a comma-separated list of destinations. This demo uses a mock price provider.</p>
 
-    <label>Availability start
-      <input id="start" type="date" />
+    <p>Select the specific days you have available (you can add multiple non-contiguous days). The app will compute the longest consecutive block from these dates and use that as the maximum trip length.</p>
+
+    <label>Add an available date
+      <div style="display:flex; gap:0.5rem">
+        <input id="dateInput" type="date" />
+        <button id="addDate" type="button">Add date</button>
+      </div>
     </label>
 
-    <label>Availability end
-      <input id="end" type="date" />
+    <label>Selected available dates
+      <div id="selectedDates" style="min-height:2rem; padding:0.25rem; border:1px dashed #ccc;"></div>
     </label>
 
     <label>Destinations (comma-separated, e.g. Paris, Tokyo, NYC)
@@ -30,10 +35,6 @@
 
     <label>Min nights
       <input id="minNights" type="number" value="2" min="1" />
-    </label>
-
-    <label>Max nights
-      <input id="maxNights" type="number" value="7" min="1" />
     </label>
 
     <button id="search">Find best prices</button>
